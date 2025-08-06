@@ -12,6 +12,7 @@ export const RegistrationSearch: React.FC<RegistrationSearchProps> = ({ isDarkMo
   const [searchResult, setSearchResult] = useState<Reciter | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [totalStudents, setTotalStudents] = useState(0);
 
   useEffect(() => {
@@ -36,14 +37,27 @@ export const RegistrationSearch: React.FC<RegistrationSearchProps> = ({ isDarkMo
   };
 
   const handleSearch = async () => {
-    if (!searchTerm.trim()) {
+    // التحقق من أن الاسم يحتوي على 3 أحرف على الأقل
+    if (searchTerm.trim().length < 3) {
+      setSearchError('يجب أن يحتوي الاسم على 3 أحرف على الأقل');
       setSearchResult(null);
       setSearchAttempted(false);
       return;
     }
 
+    if (!searchTerm.trim()) {
+      setSearchResult(null);
+      setSearchAttempted(false);
+      setSearchError('');
+      return;
+    }
+
+    setSearchError('');
     setIsLoading(true);
     setSearchAttempted(true);
+    
+    // إضافة تأخير قصير لتجنب مشكلة العرض السريع
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     try {
       const { data, error } = await supabase
@@ -55,12 +69,14 @@ export const RegistrationSearch: React.FC<RegistrationSearchProps> = ({ isDarkMo
       if (error) {
         console.error('Search error:', error);
         setSearchResult(null);
+        setSearchError('حدث خطأ أثناء البحث');
       } else {
         setSearchResult(data && data.length > 0 ? data[0] : null);
       }
     } catch (error) {
       console.error('Search error:', error);
       setSearchResult(null);
+      setSearchError('حدث خطأ أثناء البحث');
     } finally {
       setIsLoading(false);
     }
@@ -70,6 +86,54 @@ export const RegistrationSearch: React.FC<RegistrationSearchProps> = ({ isDarkMo
     if (e.key === 'Enter') {
       handleSearch();
     }
+  };
+
+  // دالة للحصول على موعد الاختبار حسب الفئة
+  const getExamScheduleForCategory = (category: string) => {
+    const schedules: { [key: string]: { day: string; time: string; date: string } } = {
+      "ثلاثة أجزاء": { 
+        day: "الجمعة", 
+        time: "٢:٠٠ ظهراً", 
+        date: "الجمعة، ٨ أغسطس ٢٠٢٥ م" 
+      },
+      "خمسة أجزاء": { 
+        day: "السبت", 
+        time: "١٢:٠٠ ظهراً", 
+        date: "السبت، ٩ أغسطس ٢٠٢٥ م" 
+      },
+      "ثمانية أجزاء": { 
+        day: "السبت", 
+        time: "١٢:٠٠ ظهراً", 
+        date: "السبت، ٩ أغسطس ٢٠٢٥ م" 
+      },
+      "عشرة أجزاء": { 
+        day: "الجمعة", 
+        time: "٢:٠٠ ظهراً", 
+        date: "الجمعة، ١٥ أغسطس ٢٠٢٥ م" 
+      },
+      "خمسة عشر جزءا": { 
+        day: "الجمعة", 
+        time: "٢:٠٠ ظهراً", 
+        date: "الجمعة، ١٥ أغسطس ٢٠٢٥ م" 
+      },
+      "عشرون جزءا": { 
+        day: "الجمعة", 
+        time: "٢:٠٠ ظهراً", 
+        date: "الجمعة، ١٥ أغسطس ٢٠٢٥ م" 
+      },
+      "خمسة وعشرون جزءا": { 
+        day: "السبت", 
+        time: "١٢:٠٠ ظهراً", 
+        date: "السبت، ١٦ أغسطس ٢٠٢٥ م" 
+      },
+      "ثلاثون جزءا": { 
+        day: "السبت", 
+        time: "١٢:٠٠ ظهراً", 
+        date: "السبت، ١٦ أغسطس ٢٠٢٥ م" 
+      }
+    };
+    
+    return schedules[category] || { day: "غير محدد", time: "غير محدد", date: "غير محدد" };
   };
 
   const formatDate = (dateString: string) => {
@@ -158,6 +222,20 @@ export const RegistrationSearch: React.FC<RegistrationSearchProps> = ({ isDarkMo
               </button>
             </div>
 
+            {/* Search Error */}
+            {searchError && (
+              <div className={`p-4 rounded-xl border-2 text-center animate-fadeIn mb-4 ${
+                isDarkMode 
+                  ? 'bg-red-900/30 border-red-600/50 text-red-300' 
+                  : 'bg-red-100 border-red-300 text-red-700'
+              }`}>
+                <div className="flex items-center justify-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  <span className="font-semibold">{searchError}</span>
+                </div>
+              </div>
+            )}
+
             {/* Search Results */}
             {searchAttempted && (
               <div className="animate-fadeIn">
@@ -234,18 +312,36 @@ export const RegistrationSearch: React.FC<RegistrationSearchProps> = ({ isDarkMo
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="md:col-span-2 mt-4">
-                          <div className="flex items-center gap-3">
-                            <Calendar className={`w-6 h-6 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
-                            <div>
-                              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>ملاحظة</p>
-                              <p className={`text-lg font-semibold ${isDarkMode ? 'text-green-200' : 'text-green-700'}`}>
-                                تم تسجيلك بنجاح في المسابقة
+                      </div>
+                      
+                      {/* موعد الاختبار */}
+                      <div className={`text-center p-6 rounded-2xl border-2 mb-4 transition-colors duration-300 ${
+                        isDarkMode 
+                          ? 'bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border-yellow-600/50' 
+                          : 'bg-gradient-to-r from-yellow-100 to-orange-100 border-yellow-300'
+                      }`}>
+                        <div className="flex justify-center items-center gap-3 mb-4">
+                          <Clock className={`w-8 h-8 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'} animate-tick`} />
+                          <h4 className={`text-2xl font-bold ${isDarkMode ? 'text-yellow-200' : 'text-yellow-800'}`}>
+                            موعد اختبارك
+                          </h4>
+                        </div>
+                        {(() => {
+                          const schedule = getExamScheduleForCategory(searchResult.category);
+                          return (
+                            <div className="space-y-2">
+                              <p className={`text-xl font-bold ${isDarkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>
+                                {schedule.day} - {schedule.time}
+                              </p>
+                              <p className={`text-lg ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                                {schedule.date}
+                              </p>
+                              <p className={`text-sm ${isDarkMode ? 'text-yellow-500' : 'text-yellow-500'}`}>
+                                يرجى الحضور قبل الموعد بـ 15 دقيقة
                               </p>
                             </div>
-                          </div>
-                        </div>
+                          );
+                        })()}
                       </div>
                       
                       <div className={`text-center p-6 rounded-2xl border-2 transition-colors duration-300 ${
@@ -256,11 +352,11 @@ export const RegistrationSearch: React.FC<RegistrationSearchProps> = ({ isDarkMo
                         <div className="flex justify-center items-center gap-3 mb-4">
                           <Calendar className={`w-8 h-8 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} animate-bounce-slow`} />
                           <h4 className={`text-2xl font-bold ${isDarkMode ? 'text-blue-200' : 'text-blue-800'}`}>
-                            اتبع جدول المواعيد المحددة لفئتك
+                            تم تسجيلك بنجاح في المسابقة
                           </h4>
                         </div>
                         <p className={`text-lg ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
-                          يرجى مراجعة جدول الاختبارات لمعرفة موعد اختبار فئة "{searchResult.category}"
+                          استعد جيداً للاختبار وراجع الأجزاء المطلوبة
                         </p>
                       </div>
                     </div>
@@ -319,7 +415,22 @@ export const RegistrationSearch: React.FC<RegistrationSearchProps> = ({ isDarkMo
                         }`}>
                           <Phone className={`w-8 h-8 mx-auto mb-2 animate-pulse ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
                           <h4 className={`font-bold mb-1 ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>التواصل المباشر</h4>
-                          <p className={`text-sm ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>اتصل بإدارة المسابقة</p>
+                          <button
+                            onClick={() => {
+                              // التنقل إلى صفحة التواصل
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              // يمكن إضافة منطق للتنقل إلى قسم التواصل في الفوتر
+                              setTimeout(() => {
+                                const contactSection = document.querySelector('.contact-section');
+                                if (contactSection) {
+                                  contactSection.scrollIntoView({ behavior: 'smooth' });
+                                }
+                              }, 500);
+                            }}
+                            className={`text-sm font-semibold hover:underline ${isDarkMode ? 'text-green-300 hover:text-green-200' : 'text-green-700 hover:text-green-600'}`}
+                          >
+                            اتصل بإدارة المسابقة
+                          </button>
                         </div>
                       </div>
                     </div>

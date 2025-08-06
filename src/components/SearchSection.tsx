@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, User, AlertCircle } from 'lucide-react';
+import { Search, User, AlertCircle, Clock, BookOpen } from 'lucide-react';
 import { Student } from '../types';
 
 interface SearchSectionProps {
@@ -13,6 +13,12 @@ export const SearchSection: React.FC<SearchSectionProps> = ({ students, onResult
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async () => {
+    // منع البحث - المسابقة لم تبدأ بعد
+    onResult(null);
+    return;
+    
+    // الكود القديم للبحث (معطل حالياً)
+    /*
     if (!searchTerm.trim()) {
       onResult(null);
       return;
@@ -30,6 +36,7 @@ export const SearchSection: React.FC<SearchSectionProps> = ({ students, onResult
     
     onResult(found || null);
     setIsLoading(false);
+    */
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -76,39 +83,43 @@ export const SearchSection: React.FC<SearchSectionProps> = ({ students, onResult
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="ادخل الاسم أو رقم الطالب..."
+                    placeholder="البحث متوقف حالياً - ترقبوا النتائج قريباً..."
                     className={`flex-1 px-6 py-4 text-right focus:outline-none text-lg transition-colors duration-300 ${
                       isDarkMode 
                         ? 'bg-gray-800 text-gray-100 placeholder-gray-400' 
                         : 'bg-white text-gray-900 placeholder-gray-500'
                     }`}
                     dir="rtl"
-                    disabled={isLoading}
+                    disabled={true}
                   />
                 </div>
               </div>
               
               <button
                 onClick={handleSearch}
-                disabled={isLoading}
-                className={`px-8 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 font-bold text-lg transform hover:scale-105 shadow-xl ${
-                  isLoading
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-2xl hover:shadow-blue-500/25'
-                }`}
+                disabled={true}
+                className="px-8 py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 font-bold text-lg bg-gray-400 text-gray-200 cursor-not-allowed"
               >
-                {isLoading ? (
-                  <>
-                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    جاري البحث...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-6 h-6" />
-                    بحث
-                  </>
-                )}
+                <Clock className="w-6 h-6" />
+                ترقبوا النتائج
               </button>
+            </div>
+            
+            {/* رسالة توضيحية */}
+            <div className={`mt-6 p-6 rounded-2xl border-2 text-center transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-orange-900/30 to-yellow-900/30 border-orange-600/50' 
+                : 'bg-gradient-to-r from-orange-100 to-yellow-100 border-orange-300'
+            }`}>
+              <div className="flex justify-center items-center gap-3 mb-4">
+                <AlertCircle className={`w-8 h-8 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'} animate-pulse`} />
+                <h3 className={`text-xl font-bold ${isDarkMode ? 'text-orange-200' : 'text-orange-800'}`}>
+                  البحث عن النتائج متوقف حالياً
+                </h3>
+              </div>
+              <p className={`text-lg ${isDarkMode ? 'text-orange-300' : 'text-orange-700'}`}>
+                ستكون النتائج متاحة فور انتهاء جميع الاختبارات والتصحيح
+              </p>
             </div>
           </div>
         </div>
